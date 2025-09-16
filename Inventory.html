@@ -143,13 +143,13 @@ body {
     box-shadow: var(--shadow);
 }
 .stat-number {
-    font-size: 2.7rem;
+    font-size: 3.7rem;
     font-weight: bold;
     color: var(--primary);
     margin-bottom: 0.5rem;
 }
 .stat-label {
-    font-size: 1rem;
+    font-size: 1.5rem;
     color: var(--dark);
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -180,6 +180,25 @@ body {
 .quantity-table th {
     background: var(--primary);
     color: #fff;
+    cursor: pointer;
+    position: relative;
+}
+.quantity-table th:hover {
+    background: #2a3669;
+}
+.quantity-table th::after {
+    content: '↕';
+    position: absolute;
+    right: 8px;
+    opacity: 0.6;
+}
+.quantity-table th.sort-asc::after {
+    content: '↑';
+    opacity: 1;
+}
+.quantity-table th.sort-desc::after {
+    content: '↓';
+    opacity: 1;
 }
 .low-quantity {
     color: var(--accent);
@@ -266,6 +285,38 @@ input:focus, select:focus, textarea:focus {
     border-radius: 8px;
 }
 
+/* Dashboard specific styles */
+.quantity-overview-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.quantity-table-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #e3e6f3;
+    border-radius: var(--radius);
+}
+.quantity-table-container h6 {
+    background: var(--primary);
+    color: white;
+    padding: 10px 15px;
+    margin: 0;
+    border-radius: var(--radius) var(--radius) 0 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.quantity-table {
+    margin-bottom: 0;
+}
+.quantity-table thead th {
+    position: sticky;
+    top: 46px;
+    z-index: 5;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .sidebar {
@@ -297,6 +348,9 @@ input:focus, select:focus, textarea:focus {
     .card {
         margin-bottom: 1.5rem;
     }
+    .quantity-overview-container {
+        grid-template-columns: 1fr;
+    }
 }
 @media (max-width: 768px) {
     .navbar-brand {
@@ -319,6 +373,9 @@ input:focus, select:focus, textarea:focus {
     .category-tab {
         padding: 8px 12px;
         font-size: 0.95rem;
+    }
+    .quantity-table-container {
+        max-height: 300px;
     }
 }
 @media (max-width: 576px) {
@@ -347,6 +404,9 @@ input:focus, select:focus, textarea:focus {
     .category-tab {
         padding: 6px 8px;
         font-size: 0.9rem;
+    }
+    .quantity-table th, .quantity-table td {
+        padding: 0.5rem;
     }
 }
     </style>
@@ -391,79 +451,76 @@ input:focus, select:focus, textarea:focus {
                 <div class="page-content active" id="dashboard">
                     <h2 class="mb-4">Dashboard Overview</h2>
                     <div class="row mb-4">
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="card stat-card">
                                 <div class="stat-number" id="totalProducts">0</div>
                                 <div class="stat-label">Total Products</div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="card stat-card">
                                 <div class="stat-number" id="totalMedicines">0</div>
                                 <div class="stat-label">Medicines</div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="card stat-card">
                                 <div class="stat-number" id="lowStockItems">0</div>
                                 <div class="stat-label">Low Stock Items</div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card stat-card">
-                                <div class="stat-number" id="totalWeight">0 kg</div>
-                                <div class="stat-label">Total Weight</div>
                             </div>
                         </div>
                     </div>
                     
                     <!-- New Quantity Overview Section -->
                     <div class="card mb-4">
-                        <div class="card-header bg-white">
-                            <h5>Inventory Quantity Overview</h5>
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Inventory Quantity Overview</h5>
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary me-2" id="sortByCategory">
+                                    <i class="fas fa-sort-alpha-down me-1"></i> Sort by Category
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" id="sortByQuantity">
+                                    <i class="fas fa-sort-numeric-down me-1"></i> Sort by Quantity
+                                </button>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6">
+                        <div class="card-body p-0">
+                            <div class="quantity-overview-container">
+                                <div class="quantity-table-container">
                                     <h6>Products</h6>
-                                    <div class="table-responsive">
-                                        <table class="table table-sm quantity-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Product Name</th>
-                                                    <th>Category</th>
-                                                    <th>Quantity</th>
-                                                    <th>Weight</th>
-                                                    <th>Expiry Date</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="productsQuantityList">
-                                                <tr>
-                                                    <td colspan="4" class="text-center">No products available</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                    <table class="table table-sm quantity-table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th data-sort="name">Product Name</th>
+                                                <th data-sort="category">Category</th>
+                                                <th data-sort="quantity">Quantity</th>
+                                                <th>Expiry Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="productsQuantityList">
+                                            <tr>
+                                                <td colspan="4" class="text-center py-3">No products available</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="quantity-table-container">
                                     <h6>Medicines & Vitamins</h6>
-                                    <div class="table-responsive">
-                                        <table class="table table-sm quantity-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Medicine Name</th>
-                                                    <th>Category</th>
-                                                    <th>Quantity</th>
-                                                    <th>Weight</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="medicinesQuantityList">
-                                                <tr>
-                                                    <td colspan="4" class="text-center">No medicines available</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                    <table class="table table-sm quantity-table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th data-sort="name">Medicine Name</th>
+                                                <th data-sort="category">Category</th>
+                                                <th data-sort="quantity">Quantity</th>
+                                                <th>Expiry Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="medicinesQuantityList">
+                                            <tr>
+                                                <td colspan="4" class="text-center py-3">No medicines available</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -820,985 +877,810 @@ input:focus, select:focus, textarea:focus {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    // Google API Setup
-    const CLIENT_ID = '951807937266-go3icp4lgr2s7ertj15rrvuvv9fc9tf0.apps.googleusercontent.com';
-    const API_KEY = 'AIzaSyC5qZrfXb3BHXcNQ6qgCYKLNAQ1uS7KQmE';
-    const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
-    const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
-    const SPREADSHEET_ID = '1nT6qcCqPr48ia-TxaLx1xjyqnFmubxfkUXZERznUBc4';
+// Google API Setup
+const CLIENT_ID = '951807937266-go3icp4lgr2s7ertj15rrvuvv9fc9tf0.apps.googleusercontent.com';
+const API_KEY = 'AIzaSyC5qZrfXb3BHXcNQ6qgCYKLNAQ1uS7KQmE';
+const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
+const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
+const SPREADSHEET_ID = '1nT6qcCqPr48ia-TxaLx1xjyqnFmubxfkUXZERznUBc4';
 
-    let gapiLoaded = false;
-    let gisLoaded = false;
-    let tokenClient;
-    let gapiInited = false;
-    let gisInited = false;
-    let googleSignedIn = false;
-    let autoSyncEnabled = true;
-    let syncInProgress = false;
+let gapiLoaded = false;
+let gisLoaded = false;
+let tokenClient;
+let gapiInited = false;
+let gisInited = false;
+let googleSignedIn = false;
+let autoSyncEnabled = true;
+let syncInProgress = false;
 
-    function updateGoogleStatus(msg) {
-        document.getElementById('googleStatus').textContent = msg;
+function updateGoogleStatus(msg) {
+    document.getElementById('googleStatus').textContent = msg;
+}
+
+function showSignInBtn(show) {
+    document.getElementById('googleSignInBtn').style.display = show ? '' : 'none';
+    document.getElementById('googleSignOutBtn').style.display = show ? 'none' : '';
+}
+
+function gapiLoadedCallback() {
+    gapiLoaded = true;
+    maybeEnableGoogleButtons();
+}
+
+function gisLoadedCallback() {
+    gisLoaded = true;
+    maybeEnableGoogleButtons();
+}
+
+function maybeEnableGoogleButtons() {
+    if (gapiLoaded && gisLoaded) {
+        document.getElementById('googleSignInBtn').disabled = false;
     }
+}
 
-    function showSignInBtn(show) {
-        document.getElementById('googleSignInBtn').style.display = show ? '' : 'none';
-        document.getElementById('googleSignOutBtn').style.display = show ? 'none' : '';
-    }
+// Load Google API
+window.onload = function() {
+    gapi.load('client', initializeGapiClient);
+};
 
-    function gapiLoadedCallback() {
-        gapiLoaded = true;
-        maybeEnableGoogleButtons();
-    }
-    function gisLoadedCallback() {
-        gisLoaded = true;
-        maybeEnableGoogleButtons();
-    }
-    function maybeEnableGoogleButtons() {
-        if (gapiLoaded && gisLoaded) {
-            document.getElementById('googleSignInBtn').disabled = false;
-        }
-    }
+function initializeGapiClient() {
+    gapi.client.init({
+        apiKey: API_KEY,
+        discoveryDocs: [DISCOVERY_DOC],
+    }).then(function() {
+        gapiInited = true;
+        updateGoogleStatus('Google API loaded.');
+    }, function(error) {
+        updateGoogleStatus('Google API failed to load.');
+    });
+}
 
-    // Load Google API
-    window.onload = function() {
-        gapi.load('client', initializeGapiClient);
-    };
-
-    function initializeGapiClient() {
-        gapi.client.init({
-            apiKey: API_KEY,
-            discoveryDocs: [DISCOVERY_DOC],
-        }).then(function () {
-            gapiInited = true;
-            updateGoogleStatus('Google API loaded.');
-        }, function(error) {
-            updateGoogleStatus('Google API failed to load.');
+// Google Identity Services
+document.getElementById('googleSignInBtn').addEventListener('click', function() {
+    if (!tokenClient) {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: CLIENT_ID,
+            scope: SCOPES,
+            callback: (tokenResponse) => {
+                gapi.client.setToken(tokenResponse);
+                googleSignedIn = true;
+                showSignInBtn(false);
+                updateGoogleStatus('Signed in to Google.');
+                // Auto sync after sign in
+                if (autoSyncEnabled) {
+                    autoSyncToGoogleSheet();
+                }
+            },
         });
     }
+    tokenClient.requestAccessToken();
+});
 
-    // Google Identity Services
-    document.getElementById('googleSignInBtn').addEventListener('click', function() {
-        if (!tokenClient) {
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID,
-                scope: SCOPES,
-                callback: (tokenResponse) => {
-                    gapi.client.setToken(tokenResponse);
-                    googleSignedIn = true;
-                    showSignInBtn(false);
-                    updateGoogleStatus('Signed in to Google.');
-                    // Auto sync after sign in
-                    if (autoSyncEnabled) {
-                        autoSyncToGoogleSheet();
-                    }
-                },
-            });
+document.getElementById('googleSignOutBtn').addEventListener('click', function() {
+    googleSignedIn = false;
+    gapi.client.setToken('');
+    showSignInBtn(true);
+    updateGoogleStatus('Signed out from Google.');
+});
+
+document.getElementById('autoSyncToggle').addEventListener('change', function() {
+    autoSyncEnabled = this.checked;
+});
+
+// Sync to Google Sheet
+document.getElementById('syncToGoogleSheet').addEventListener('click', function() {
+    syncToGoogleSheet();
+});
+
+document.getElementById('loadFromGoogleSheet').addEventListener('click', function() {
+    loadFromGoogleSheet();
+});
+
+function syncToGoogleSheet() {
+    if (!googleSignedIn) {
+        updateGoogleStatus('Please sign in to Google first.');
+        return;
+    }
+
+    showSyncStatus('Syncing to Google Sheet...', 'loading');
+    syncInProgress = true;
+
+    const products = JSON.parse(localStorage.getItem('products')) || [];
+    const medicines = JSON.parse(localStorage.getItem('medicines')) || [];
+
+    // Create headers for empty sheets
+    const productsHeaders = [['Name', 'Category', 'Quantity', 'Weight', 'Weight Unit', 'Expiry Date', 'Last Updated']];
+    const medicinesHeaders = [['Name', 'Type', 'Category', 'Quantity', 'Weight', 'Weight Unit', 'Expiry Date', 'Last Updated']];
+
+    const productsData = products.length > 0 
+        ? products.map(p => [p.name, p.category, p.quantity, p.weight, p.weightUnit, p.expiryDate || '', p.lastUpdated])
+        : productsHeaders;
+        
+    const medicinesData = medicines.length > 0 
+        ? medicines.map(m => [m.name, m.type, m.category, m.quantity, m.weight, m.weightUnit, m.expiryDate || '', m.lastUpdated])
+        : medicinesHeaders;
+
+    // Calculate ranges based on data length
+    const productsRange = products.length > 0 
+        ? `Products!A2:G${products.length + 1}` 
+        : 'Products!A2:G2';
+        
+    const medicinesRange = medicines.length > 0 
+        ? `Medicines!A2:H${medicines.length + 1}` 
+        : 'Medicines!A2:H2';
+
+    const values = [
+        {range: productsRange, values: productsData},
+        {range: medicinesRange, values: medicinesData}
+    ];
+
+    const body = {
+        data: values,
+        valueInputOption: 'USER_ENTERED'
+    };
+
+    gapi.client.sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId: SPREADSHEET_ID,
+        resource: body
+    }).then((response) => {
+        showSyncStatus('Data synced to Google Sheet successfully!', 'success');
+        setTimeout(() => hideSyncStatus(), 3000);
+        syncInProgress = false;
+    }, (reason) => {
+        showSyncStatus('Error syncing to Google Sheet: ' + reason.result.error.message, 'error');
+        setTimeout(() => hideSyncStatus(), 5000);
+        syncInProgress = false;
+    });
+}
+
+
+function loadFromGoogleSheet() {
+    if (!googleSignedIn) {
+        updateGoogleStatus('Please sign in to Google first.');
+        return;
+    }
+
+    showSyncStatus('Loading from Google Sheet...', 'loading');
+    syncInProgress = true;
+
+    gapi.client.sheets.spreadsheets.values.batchGet({
+        spreadsheetId: SPREADSHEET_ID,
+        ranges: ['Products!A2:G', 'Medicines!A2:H2'],
+    }).then((response) => {
+        const result = response.result;
+        const productRanges = result.valueRanges[0];
+        const medicineRanges = result.valueRanges[1];
+
+        if (productRanges.values) {
+            const products = productRanges.values.map(row => ({
+                name: row[0],
+                category: row[1],
+                quantity: parseInt(row[2]),
+                weight: parseFloat(row[3]),
+                weightUnit: row[4],
+                expiryDate: row[5] || null,
+                lastUpdated: row[6] || new Date().toISOString()
+            }));
+            localStorage.setItem('products', JSON.stringify(products));
         }
-        tokenClient.requestAccessToken();
-    });
 
-    document.getElementById('googleSignOutBtn').addEventListener('click', function() {
-        googleSignedIn = false;
-        gapi.client.setToken('');
-        showSignInBtn(true);
-        updateGoogleStatus('Signed out.');
-    });
+        if (medicineRanges.values) {
+            const medicines = medicineRanges.values.map(row => ({
+                name: row[0],
+                type: row[1],
+                category: row[2],
+                quantity: parseInt(row[3]),
+                weight: parseFloat(row[4]),
+                weightUnit: row[5],
+                expiryDate: row[6] || null,
+                lastUpdated: row[7] || new Date().toISOString()
+            }));
+            localStorage.setItem('medicines', JSON.stringify(medicines));
+        }
 
-    // Auto sync toggle
-    document.getElementById('autoSyncToggle').addEventListener('change', function() {
-        autoSyncEnabled = this.checked;
-        if (autoSyncEnabled && googleSignedIn) {
+        loadData();
+        showSyncStatus('Data loaded from Google Sheet successfully!', 'success');
+        setTimeout(() => hideSyncStatus(), 3000);
+        syncInProgress = false;
+    }, (reason) => {
+        showSyncStatus('Error loading from Google Sheet: ' + reason.result.error.message, 'error');
+        setTimeout(() => hideSyncStatus(), 5000);
+        syncInProgress = false;
+    });
+}
+
+function autoSyncToGoogleSheet() {
+    if (autoSyncEnabled && googleSignedIn && !syncInProgress) {
+        syncToGoogleSheet();
+    }
+}
+
+function showSyncStatus(message, type) {
+    const statusEl = document.getElementById('syncStatus');
+    statusEl.textContent = message;
+    statusEl.className = 'sync-status';
+    statusEl.classList.add(`sync-${type}`);
+    statusEl.style.display = 'block';
+}
+
+function hideSyncStatus() {
+    document.getElementById('syncStatus').style.display = 'none';
+}
+
+// Excel Import/Export
+document.getElementById('exportProducts').addEventListener('click', function() {
+    const products = JSON.parse(localStorage.getItem('products')) || [];
+    exportToExcel(products, 'Products Inventory');
+});
+
+document.getElementById('exportMedicines').addEventListener('click', function() {
+    const medicines = JSON.parse(localStorage.getItem('medicines')) || [];
+    exportToExcel(medicines, 'Medicines Inventory');
+});
+
+document.getElementById('excelFile').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, {type: 'array'});
+
+        // Process first sheet
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        if (jsonData.length > 0) {
+            // Determine if it's products or medicines based on columns
+            const firstRow = jsonData[0];
+            if (firstRow.hasOwnProperty('Type')) {
+                // Medicines data
+                localStorage.setItem('medicines', JSON.stringify(jsonData));
+            } else {
+                // Products data
+                localStorage.setItem('products', JSON.stringify(jsonData));
+            }
+
+            loadData();
+            showSyncStatus('Data imported from Excel successfully!', 'success');
+            setTimeout(() => hideSyncStatus(), 3000);
             autoSyncToGoogleSheet();
         }
-    });
-
-    // Show sync status
-    function showSyncStatus(message, type) {
-        const statusElement = document.getElementById('syncStatus');
-        statusElement.textContent = message;
-        statusElement.className = 'sync-status';
-        
-        if (type === 'success') {
-            statusElement.classList.add('sync-success');
-        } else if (type === 'error') {
-            statusElement.classList.add('sync-error');
-        } else if (type === 'loading') {
-            statusElement.classList.add('sync-loading');
-        }
-        
-        statusElement.style.display = 'block';
-        
-        // Hide after 3 seconds
-        setTimeout(() => {
-            statusElement.style.display = 'none';
-        }, 3000);
-    }
-
-    // Google Sheets Sync
-    document.getElementById('syncToGoogleSheet').addEventListener('click', async function() {
-        if (!googleSignedIn) {
-            alert('Please sign in with Google first.');
-            return;
-        }
-        updateGoogleStatus('Syncing...');
-        showSyncStatus('Syncing to Google Sheet...', 'loading');
-        await syncToGoogleSheet();
-    });
-
-    document.getElementById('loadFromGoogleSheet').addEventListener('click', async function() {
-        if (!googleSignedIn) {
-            alert('Please sign in with Google first.');
-            return;
-        }
-        updateGoogleStatus('Loading...');
-        showSyncStatus('Loading from Google Sheet...', 'loading');
-        try {
-            // Load products from Sheet1
-            const productsRes = await gapi.client.sheets.spreadsheets.values.get({
-                spreadsheetId: SPREADSHEET_ID,
-                range: 'Sheet1!A1:G1000' // Updated to include expiry date column
-            });
-            
-            // Load medicines from Sheet2
-            const medicinesRes = await gapi.client.sheets.spreadsheets.values.get({
-                spreadsheetId: SPREADSHEET_ID,
-                range: 'Sheet2!A1:G1000'
-            });
-            
-            // Load vitamins from Sheet3
-            const vitaminsRes = await gapi.client.sheets.spreadsheets.values.get({
-                spreadsheetId: SPREADSHEET_ID,
-                range: 'Sheet3!A1:G1000'
-            });
-            
-            // Load supplements from Sheet4
-            const supplementsRes = await gapi.client.sheets.spreadsheets.values.get({
-                spreadsheetId: SPREADSHEET_ID,
-                range: 'Sheet4!A1:G1000'
-            });
-            
-            const productsData = productsRes.result.values || [];
-            const medicinesData = medicinesRes.result.values || [];
-            const vitaminsData = vitaminsRes.result.values || [];
-            const supplementsData = supplementsRes.result.values || [];
-            
-            if (productsData.length < 2 && medicinesData.length < 2 && vitaminsData.length < 2 && supplementsData.length < 2) {
-                alert('No data found in Google Sheet.');
-                updateGoogleStatus('No data found.');
-                showSyncStatus('No data found in Google Sheet', 'error');
-                return;
-            }
-            
-            // Clear existing data
-            inventoryData.products = [];
-            inventoryData.medicines = [];
-            
-            // Process products from Sheet1
-            if (productsData.length > 1) {
-                productsData.shift(); // Remove headers
-                productsData.forEach(row => {
-                    inventoryData.products.push({
-                        name: row[0],
-                        category: row[1],
-                        quantity: Number(row[2]),
-                        weight: Number(row[3] || 0),
-                        weightUnit: row[4] || 'kg', // Default to kg if not specified
-                        expiryDate: row[5] || 'N/A', // Get expiry date from row 5
-                        lastUpdated: row[6],
-                        id: Date.now() + Math.random()
-                    });
-                });
-            }
-            
-            // Process medicines from Sheet2
-            if (medicinesData.length > 1) {
-                medicinesData.shift(); // Remove headers
-                medicinesData.forEach(row => {
-                    inventoryData.medicines.push({
-                        name: row[0],
-                        type: "Medicine",
-                        category: row[1],
-                        quantity: Number(row[2]),
-                        weight: Number(row[3] || 0),
-                        weightUnit: row[4] || 'kg', // Default to kg if not specified
-                        expiryDate: row[5],
-                        lastUpdated: row[6],
-                        id: Date.now() + Math.random()
-                    });
-                });
-            }
-            
-            // Process vitamins from Sheet3
-            if (vitaminsData.length > 1) {
-                vitaminsData.shift(); // Remove headers
-                vitaminsData.forEach(row => {
-                    inventoryData.medicines.push({
-                        name: row[0],
-                        type: "Vitamin",
-                        category: row[1],
-                        quantity: Number(row[2]),
-                        weight: Number(row[3] || 0),
-                        weightUnit: row[4] || 'kg', // Default to kg if not specified
-                        expiryDate: row[5],
-                        lastUpdated: row[6],
-                        id: Date.now() + Math.random()
-                    });
-                });
-            }
-            
-            // Process supplements from Sheet4
-            if (supplementsData.length > 1) {
-                supplementsData.shift(); // Remove headers
-                supplementsData.forEach(row => {
-                    inventoryData.medicines.push({
-                        name: row[0],
-                        type: "Supplement",
-                        category: row[1],
-                        quantity: Number(row[2]),
-                        weight: Number(row[3] || 0),
-                        weightUnit: row[4] || 'kg', // Default to kg if not specified
-                        expiryDate: row[5],
-                        lastUpdated: row[6],
-                        id: Date.now() + Math.random()
-                    });
-                });
-            }
-            
-            saveToLocalStorage();
-            renderProductsTable();
-            renderMedicinesTable();
-            updateDashboard();
-            renderQuantityOverview();
-            alert("Loaded from Google Sheet!");
-            updateGoogleStatus('Loaded from Google Sheet!');
-            showSyncStatus('Loaded from Google Sheet!', 'success');
-        } catch (err) {
-            updateGoogleStatus('Load failed.');
-            showSyncStatus('Load failed: ' + err.result.error.message, 'error');
-            alert('Load failed: ' + err.result.error.message);
-        }
-    });
-
-    // Auto sync function
-    async function autoSyncToGoogleSheet() {
-        if (!googleSignedIn || !autoSyncEnabled || syncInProgress) return;
-        
-        syncInProgress = true;
-        try {
-            await syncToGoogleSheet();
-        } catch (error) {
-            console.error("Auto sync failed:", error);
-        } finally {
-            syncInProgress = false;
-        }
-    }
-
-    // Main sync function
-    async function syncToGoogleSheet() {
-        if (!googleSignedIn) return;
-        
-        try {
-            // Prepare data for Sheet1 (Products)
-            const productsHeaders = ["Name", "Category", "Quantity", "Weight", "Weight Unit", "Expiry Date", "Last Updated"];
-            const productsData = inventoryData.products.map(p => [
-                p.name, 
-                p.category, 
-                p.quantity, 
-                p.weight, 
-                p.weightUnit, 
-                p.expiryDate || "N/A",  // Include expiry date
-                p.lastUpdated
-            ]);
-            
-            // Prepare data for Sheet2 (Medicines)
-            const medicinesHeaders = ["Name", "Category", "Quantity", "Weight", "Weight Unit", "Expiry Date", "Last Updated"];
-            const medicinesData = inventoryData.medicines
-                .filter(m => m.type === "Medicine")
-                .map(m => [
-                    m.name, 
-                    m.category, 
-                    m.quantity, 
-                    m.weight, 
-                    m.weightUnit, 
-                    m.expiryDate, 
-                    m.lastUpdated
-                ]);
-            
-            // Prepare data for Sheet3 (Vitamins)
-            const vitaminsData = inventoryData.medicines
-                .filter(m => m.type === "Vitamin")
-                .map(m => [
-                    m.name, 
-                    m.category, 
-                    m.quantity, 
-                    m.weight, 
-                    m.weightUnit, 
-                    m.expiryDate, 
-                    m.lastUpdated
-                ]);
-            
-            // Prepare data for Sheet4 (Supplements)
-            const supplementsData = inventoryData.medicines
-                .filter(m => m.type === "Supplement")
-                .map(m => [
-                    m.name, 
-                    m.category, 
-                    m.quantity, 
-                    m.weight, 
-                    m.weightUnit, 
-                    m.expiryDate, 
-                    m.lastUpdated
-                ]);
-            
-            // Update Sheet1 (Products)
-            await gapi.client.sheets.spreadsheets.values.update({
-                spreadsheetId: SPREADSHEET_ID,
-                range: 'Sheet1!A1:G1000', // Updated to include expiry date column
-                valueInputOption: 'RAW',
-                resource: { values: [productsHeaders, ...productsData] }
-            });
-            
-            // Update Sheet2 (Medicines)
-            await gapi.client.sheets.spreadsheets.values.update({
-                spreadsheetId: SPREADSHEET_ID,
-                range: 'Sheet2!A1',
-                valueInputOption: 'RAW',
-                resource: { values: [medicinesHeaders, ...medicinesData] }
-            });
-            
-            // Update Sheet3 (Vitamins)
-            await gapi.client.sheets.spreadsheets.values.update({
-                spreadsheetId: SPREADSHEET_ID,
-                range: 'Sheet3!A1',
-                valueInputOption: 'RAW',
-                resource: { values: [medicinesHeaders, ...vitaminsData] }
-            });
-            
-            // Update Sheet4 (Supplements)
-            await gapi.client.sheets.spreadsheets.values.update({
-                spreadsheetId: SPREADSHEET_ID,
-                range: 'Sheet4!A1',
-                valueInputOption: 'RAW',
-                resource: { values: [medicinesHeaders, ...supplementsData] }
-            });
-            
-            updateGoogleStatus('Synced to Google Sheet!');
-            showSyncStatus('Synced to Google Sheet!', 'success');
-        } catch (err) {
-            updateGoogleStatus('Sync failed.');
-            showSyncStatus('Sync failed: ' + err.result.error.message, 'error');
-            alert('Sync failed: ' + err.result.error.message);
-        }
-    }
-    </script>
-    <script>
-        // Inventory Data Structure
-    let inventoryData = {
-        products: [],
-        medicines: [],
-        productCategories: [],
-        medicineCategories: [],
-        activities: []
     };
-    let currentAdjustmentItem = null;
-    let currentAdjustmentType = '';
-    let currentCategoryType = 'product'; // Default to product categories
+    reader.readAsArrayBuffer(file);
+});
 
-    // Weight conversion functions
-    function convertToKg(weight, unit) {
-        switch(unit) {
-            case 'kg': return weight;
-            case 'g': return weight / 1000;
-            case 'mg': return weight / 1000000;
-            case 'lb': return weight * 0.453592;
-            case 'oz': return weight * 0.0283495;
-            default: return weight;
-        }
+function exportToExcel(data, fileName) {
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory');
+    XLSX.writeFile(workbook, `${fileName}.xlsx`);
+}
+
+// Inventory Management
+let currentAdjustingItem = null;
+let currentAdjustingType = null;
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize categories if not exists
+    if (!localStorage.getItem('productCategories')) {
+        localStorage.setItem('productCategories', JSON.stringify(['Electronics', 'Clothing', 'Food', 'Books', 'Other']));
+    }
+    if (!localStorage.getItem('medicineCategories')) {
+        localStorage.setItem('medicineCategories', JSON.stringify(['Pain Relief', 'Vitamins', 'First Aid', 'Supplements', 'Other']));
     }
 
-    function formatWeight(weight, unit) {
-        return `${weight} ${unit}`;
+    // Load data
+    loadData();
+
+    // Setup event listeners
+    setupEventListeners();
+
+    // Setup navigation
+    setupNavigation();
+
+    // Setup category tabs
+    setupCategoryTabs();
+});
+
+function loadData() {
+    loadProducts();
+    loadMedicines();
+    updateDashboardStats();
+    updateCategoryFilters();
+    updateQuantityOverview();
+}
+
+function loadProducts() {
+    const products = JSON.parse(localStorage.getItem('products')) || [];
+    const tbody = document.getElementById('productsTableBody');
+    tbody.innerHTML = '';
+
+    if (products.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No products found. Add some products to get started.</td></tr>';
+        return;
     }
 
-    // Load data from localStorage
-    loadFromLocalStorage();
-    renderProductsTable();
-    renderMedicinesTable();
-    renderCategoriesList();
-    populateCategoryDropdowns();
-    updateDashboard();
-    renderActivities();
-    renderQuantityOverview();
-
-    // Category tabs
-    document.querySelectorAll('.category-tab').forEach(tab => {
-        tab.addEventListener('click', function() {
-            document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-            currentCategoryType = this.dataset.categoryType;
-            renderCategoriesList();
-        });
+    products.forEach((product, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${product.name}</td>
+            <td><span class="category-badge">${product.category}</span></td>
+            <td class="quantity-display ${product.quantity < 10 ? 'low-quantity' : ''}">${product.quantity}</td>
+            <td>${product.weight} ${product.weightUnit}</td>
+            <td>
+                <i class="fas fa-plus-circle add-btn action-btn" data-index="${index}" data-type="product"></i>
+                <i class="fas fa-minus-circle remove-btn action-btn" data-index="${index}" data-type="product"></i>
+            </td>
+            <td>${formatDate(product.lastUpdated)}</td>
+        `;
+        tbody.appendChild(row);
     });
 
-    // Sidebar navigation
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', function() {
-            showPage(this.dataset.page);
+    // Add event listeners to action buttons
+    document.querySelectorAll('.add-btn, .remove-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const index = this.getAttribute('data-index');
+            const type = this.getAttribute('data-type');
+            openAdjustQuantityModal(index, type);
         });
     });
+}
 
-    function showPage(page) {
-        document.querySelectorAll('.page-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        document.getElementById(page).classList.add('active');
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.classList.remove('active');
-        });
-        document.querySelector(`.nav-link[data-page="${page}"]`).classList.add('active');
+function loadMedicines() {
+    const medicines = JSON.parse(localStorage.getItem('medicines')) || [];
+    const tbody = document.getElementById('medicinesTableBody');
+    tbody.innerHTML = '';
+
+    if (medicines.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center">No medicines found. Add some medicines to get started.</td></tr>';
+        return;
     }
 
-    // Dashboard stats
-    function updateDashboard() {
-        document.getElementById('totalProducts').textContent = inventoryData.products.length;
-        document.getElementById('totalMedicines').textContent = inventoryData.medicines.length;
-        document.getElementById('lowStockItems').textContent =
-            inventoryData.products.filter(p => p.quantity <= 5).length +
-            inventoryData.medicines.filter(m => m.quantity <= 5).length;
-        
-        // Calculate total weight in kg
-        const totalProductsWeight = inventoryData.products.reduce((sum, p) => {
-            return sum + (convertToKg(p.weight, p.weightUnit || 'kg') * p.quantity);
-        }, 0);
-        
-        const totalMedicinesWeight = inventoryData.medicines.reduce((sum, m) => {
-            return sum + (convertToKg(m.weight, m.weightUnit || 'kg') * m.quantity);
-        }, 0);
-        
-        const totalWeight = totalProductsWeight + totalMedicinesWeight;
-        document.getElementById('totalWeight').textContent = totalWeight.toFixed(2) + ' kg';
-    }
-
-    // New function to render quantity overview
-    function renderQuantityOverview() {
-        const productsList = document.getElementById('productsQuantityList');
-        const medicinesList = document.getElementById('medicinesQuantityList');
-        
-        // Clear existing content
-        productsList.innerHTML = '';
-        medicinesList.innerHTML = '';
-        
-        // Render products
-        if (inventoryData.products.length === 0) {
-            productsList.innerHTML = '<tr><td colspan="5" class="text-center">No products available</td></tr>';
-        } else {
-            inventoryData.products.forEach(product => {
-                const row = document.createElement('tr');
-                const quantityClass = product.quantity <= 5 ? 'low-quantity' : '';
-                const totalWeight = product.weight * product.quantity;
-                row.innerHTML = `
-                    <td>${product.name}</td>
-                    <td>${product.category}</td>
-                    <td class="${quantityClass}">${product.quantity}</td>
-                    <td>${formatWeight(totalWeight, product.weightUnit)}</td>
-                    <td>${product.expiryDate || 'N/A'}</td>
-                `;
-                productsList.appendChild(row);
-            });
-        }
-        
-        // Render medicines
-        if (inventoryData.medicines.length === 0) {
-            medicinesList.innerHTML = '<tr><td colspan="4" class="text-center">No medicines available</td></tr>';
-        } else {
-            inventoryData.medicines.forEach(medicine => {
-                const row = document.createElement('tr');
-                const quantityClass = medicine.quantity <= 5 ? 'low-quantity' : '';
-                const totalWeight = medicine.weight * medicine.quantity;
-                row.innerHTML = `
-                    <td>${medicine.name}</td>
-                    <td>${medicine.category}</td>
-                    <td class="${quantityClass}">${medicine.quantity}</td>
-                    <td>${formatWeight(totalWeight, medicine.weightUnit)}</td>
-                `;
-                medicinesList.appendChild(row);
-            });
-        }
-    }
-
-    // Activities
-    function addActivity(message) {
-        const activity = {
-            timestamp: new Date().toLocaleString(),
-            message: message
-        };
-        inventoryData.activities.unshift(activity);
-        if (inventoryData.activities.length > 10) {
-            inventoryData.activities.pop();
-        }
-        saveToLocalStorage();
-        renderActivities();
-        
-        // Auto sync after activity
-        autoSyncToGoogleSheet();
-    }
-
-    function renderActivities() {
-        const activitiesList = document.getElementById('recentActivities');
-        activitiesList.innerHTML = '';
-        if (inventoryData.activities.length === 0) {
-            activitiesList.innerHTML = '<li class="list-group-item">No recent activities</li>';
-            return;
-        }
-        inventoryData.activities.forEach(activity => {
-            const li = document.createElement('li');
-            li.className = 'list-group-item';
-            li.textContent = `${activity.timestamp}: ${activity.message}`;
-            activitiesList.appendChild(li);
-        });
-    }
-
-    // Products
-    document.getElementById('saveProductBtn').addEventListener('click', function() {
-        const name = document.getElementById('productName').value.trim();
-        const category = document.getElementById('productCategory').value;
-        const quantity = parseInt(document.getElementById('initialQuantity').value);
-        const weight = parseFloat(document.getElementById('productWeight').value);
-        const weightUnit = document.getElementById('productWeightUnit').value;
-        const expiryDate = document.getElementById('expiryDate').value || 'N/A';
-        
-        if (!name || !category || isNaN(quantity) || quantity < 0 || isNaN(weight) || weight < 0) {
-            alert('Please fill in all fields correctly');
-            return;
-        }
-        
-        const newProduct = {
-            id: Date.now(),
-            name: name,
-            category: category,
-            quantity: quantity,
-            weight: weight,
-            weightUnit: weightUnit,
-            expiryDate: expiryDate,
-            lastUpdated: new Date().toLocaleString()
-        };
-        
-        inventoryData.products.push(newProduct);
-        addActivity(`Added product: ${name}`);
-        saveToLocalStorage();
-        renderProductsTable();
-        updateDashboard();
-        renderQuantityOverview();
-        document.getElementById('addProductForm').reset();
-        bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
+    medicines.forEach((medicine, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${medicine.name}</td>
+            <td>${medicine.type}</td>
+            <td><span class="category-badge">${medicine.category}</span></td>
+            <td class="quantity-display ${medicine.quantity < 10 ? 'low-quantity' : ''}">${medicine.quantity}</td>
+            <td>${medicine.weight} ${medicine.weightUnit}</td>
+            <td>${medicine.expiryDate ? formatDate(medicine.expiryDate) : 'N/A'}</td>
+            <td>
+                <i class="fas fa-plus-circle add-btn action-btn" data-index="${index}" data-type="medicine"></i>
+                <i class="fas fa-minus-circle remove-btn action-btn" data-index="${index}" data-type="medicine"></i>
+            </td>
+            <td>${formatDate(medicine.lastUpdated)}</td>
+        `;
+        tbody.appendChild(row);
     });
 
-    function renderProductsTable(products = inventoryData.products) {
-        const tableBody = document.getElementById('productsTableBody');
-        tableBody.innerHTML = '';
-        if (products.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No products found. Add some products to get started.</td></tr>';
-            return;
-        }
+    // Add event listeners to action buttons
+    document.querySelectorAll('.add-btn, .remove-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const index = this.getAttribute('data-index');
+            const type = this.getAttribute('data-type');
+            openAdjustQuantityModal(index, type);
+        });
+    });
+}
+
+function updateDashboardStats() {
+    const products = JSON.parse(localStorage.getItem('products')) || [];
+    const medicines = JSON.parse(localStorage.getItem('medicines')) || [];
+    
+    document.getElementById('totalProducts').textContent = products.length;
+    document.getElementById('totalMedicines').textContent = medicines.length;
+    
+    const lowStockItems = [...products, ...medicines].filter(item => item.quantity < 10).length;
+    document.getElementById('lowStockItems').textContent = lowStockItems;
+}
+
+function updateCategoryFilters() {
+    const productCategories = JSON.parse(localStorage.getItem('productCategories')) || [];
+    const medicineCategories = JSON.parse(localStorage.getItem('medicineCategories')) || [];
+    
+    // Update product category filter
+    const productCategoryFilter = document.getElementById('productCategoryFilter');
+    productCategoryFilter.innerHTML = '<option value="">All Categories</option>';
+    productCategories.forEach(category => {
+        productCategoryFilter.innerHTML += `<option value="${category}">${category}</option>`;
+    });
+    
+    // Update medicine category filter
+    const medicineCategoryFilter = document.getElementById('medicineCategoryFilter');
+    medicineCategoryFilter.innerHTML = '<option value="">All Categories</option>';
+    medicineCategories.forEach(category => {
+        medicineCategoryFilter.innerHTML += `<option value="${category}">${category}</option>`;
+    });
+    
+    // Update add product modal category dropdown
+    const productCategory = document.getElementById('productCategory');
+    productCategory.innerHTML = '<option value="">Select Category</option>';
+    productCategories.forEach(category => {
+        productCategory.innerHTML += `<option value="${category}">${category}</option>`;
+    });
+    
+    // Update add medicine modal category dropdown
+    const medicineCategory = document.getElementById('medicineCategory');
+    medicineCategory.innerHTML = '<option value="">Select Category</option>';
+    medicineCategories.forEach(category => {
+        medicineCategory.innerHTML += `<option value="${category}">${category}</option>`;
+    });
+}
+
+function updateQuantityOverview() {
+    const products = JSON.parse(localStorage.getItem('products')) || [];
+    const medicines = JSON.parse(localStorage.getItem('medicines')) || [];
+    
+    // Update products quantity list
+    const productsList = document.getElementById('productsQuantityList');
+    productsList.innerHTML = '';
+    
+    if (products.length === 0) {
+        productsList.innerHTML = '<tr><td colspan="4" class="text-center py-3">No products available</td></tr>';
+    } else {
         products.forEach(product => {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${product.name}</td>
-                <td>${product.category}</td>
-                <td>${product.quantity}</td>
-                <td>${formatWeight(product.weight, product.weightUnit)}</td>
-                <td>
-                    <button class="btn btn-warning btn-sm" onclick="showAdjustQuantityModal(${product.id}, 'product')">
-                        <i class="fas fa-edit"></i> Adjust
-                    </button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteProduct(${product.id})">
-                        <i class="fas fa-trash"></i> Delete
-                    </button>
-                </td>
-                <td>${product.lastUpdated}</td>
+                <td><span class="category-badge">${product.category}</span></td>
+                <td class="${product.quantity < 10 ? 'low-quantity' : ''}">${product.quantity}</td>
+                <td>${product.expiryDate ? formatDate(product.expiryDate) : 'N/A'}</td>
             `;
-            tableBody.appendChild(row);
+            productsList.appendChild(row);
         });
     }
+    
+    // Update medicines quantity list
+    const medicinesList = document.getElementById('medicinesQuantityList');
+    medicinesList.innerHTML = '';
+    
+    if (medicines.length === 0) {
+        medicinesList.innerHTML = '<tr><td colspan="4" class="text-center py-3">No medicines available</td></tr>';
+    } else {
+        medicines.forEach(medicine => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${medicine.name}</td>
+                <td><span class="category-badge">${medicine.category}</span></td>
+                <td class="${medicine.quantity < 10 ? 'low-quantity' : ''}">${medicine.quantity}</td>
+                <td>${medicine.expiryDate ? formatDate(medicine.expiryDate) : 'N/A'}</td>
+            `;
+            medicinesList.appendChild(row);
+        });
+    }
+}
 
-    window.showAdjustQuantityModal = function(id, type) {
-        currentAdjustmentItem = inventoryData[type + 's'].find(item => item.id === id);
-        if (!currentAdjustmentItem) return;
-        document.getElementById('currentQuantityDisplay').textContent = currentAdjustmentItem.quantity;
-        currentAdjustmentType = type;
-        bootstrap.Modal.getOrCreateInstance(document.getElementById('adjustQuantityModal')).show();
-    };
-
-    window.deleteProduct = function(id) {
-        const product = inventoryData.products.find(p => p.id === id);
-        if (!product) return;
-        if (!confirm(`Delete product "${product.name}"?`)) return;
-        inventoryData.products = inventoryData.products.filter(p => p.id !== id);
-        addActivity(`Deleted product: ${product.name}`);
-        saveToLocalStorage();
-        renderProductsTable();
-        updateDashboard();
-        renderQuantityOverview();
-    };
-
-    // Medicines
+function setupEventListeners() {
+    // Save product button
+    document.getElementById('saveProductBtn').addEventListener('click', function() {
+        const name = document.getElementById('productName').value;
+        const category = document.getElementById('productCategory').value;
+        const quantity = parseInt(document.getElementById('initialQuantity').value);
+        const weight = parseFloat(document.getElementById('productWeight').value);
+        const weightUnit = document.getElementById('productWeightUnit').value;
+        const expiryDate = document.getElementById('expiryDate').value || null;
+        
+        if (!name || !category) {
+            alert('Please fill in all required fields.');
+            return;
+        }
+        
+        const products = JSON.parse(localStorage.getItem('products')) || [];
+        products.push({
+            name,
+            category,
+            quantity,
+            weight,
+            weightUnit,
+            expiryDate,
+            lastUpdated: new Date().toISOString()
+        });
+        
+        localStorage.setItem('products', JSON.stringify(products));
+        
+        // Close modal and reset form
+        bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
+        document.getElementById('addProductForm').reset();
+        
+        // Update UI
+        loadData();
+        autoSyncToGoogleSheet();
+    });
+    
+    // Save medicine button
     document.getElementById('saveMedicineBtn').addEventListener('click', function() {
-        const name = document.getElementById('medicineName').value.trim();
+        const name = document.getElementById('medicineName').value;
         const type = document.getElementById('medicineType').value;
         const category = document.getElementById('medicineCategory').value;
         const quantity = parseInt(document.getElementById('medicineQuantity').value);
         const weight = parseFloat(document.getElementById('medicineWeight').value);
         const weightUnit = document.getElementById('medicineWeightUnit').value;
-        const expiryDate = document.getElementById('expiryDate').value || 'N/A';
+        const expiryDate = document.getElementById('expiryDate').value || null;
         
-        if (!name || !category || isNaN(quantity) || quantity < 0 || isNaN(weight) || weight < 0) {
-            alert('Please fill in all fields correctly');
+        if (!name || !category) {
+            alert('Please fill in all required fields.');
             return;
         }
         
-        const newMedicine = {
-            id: Date.now(),
-            name: name,
-            type: type,
-            category: category,
-            quantity: quantity,
-            weight: weight,
-            weightUnit: weightUnit,
-            expiryDate: expiryDate,
-            lastUpdated: new Date().toLocaleString()
-        };
-        
-        inventoryData.medicines.push(newMedicine);
-        addActivity(`Added ${type.toLowerCase()}: ${name}`);
-        saveToLocalStorage();
-        renderMedicinesTable();
-        updateDashboard();
-        renderQuantityOverview();
-        document.getElementById('addMedicineForm').reset();
-        bootstrap.Modal.getInstance(document.getElementById('addMedicineModal')).hide();
-    });
-
-    function renderMedicinesTable(medicines = inventoryData.medicines) {
-        const tableBody = document.getElementById('medicinesTableBody');
-        tableBody.innerHTML = '';
-        if (medicines.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="8" class="text-center">No medicines found. Add some medicines to get started.</td></tr>';
-            return;
-        }
-        medicines.forEach(medicine => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${medicine.name}</td>
-                <td>${medicine.type}</td>
-                <td>${medicine.category}</td>
-                <td>${medicine.quantity}</td>
-                <td>${formatWeight(medicine.weight, medicine.weightUnit)}</td>
-                <td>${medicine.expiryDate}</td>
-                <td>
-                    <button class="btn btn-warning btn-sm" onclick="showAdjustQuantityModal(${medicine.id}, 'medicine')">
-                        <i class="fas fa-edit"></i> Adjust
-                    </button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteMedicine(${medicine.id})">
-                        <i class="fas fa-trash"></i> Delete
-                    </button>
-                </td>
-                <td>${medicine.lastUpdated}</td>
-            `;
-            tableBody.appendChild(row);
+        const medicines = JSON.parse(localStorage.getItem('medicines')) || [];
+        medicines.push({
+            name,
+            type,
+            category,
+            quantity,
+            weight,
+            weightUnit,
+            expiryDate,
+            lastUpdated: new Date().toISOString()
         });
-    }
-
-    window.deleteMedicine = function(id) {
-        const medicine = inventoryData.medicines.find(m => m.id === id);
-        if (!medicine) return;
-        if (!confirm(`Delete ${medicine.type.toLowerCase()} "${medicine.name}"?`)) return;
-        inventoryData.medicines = inventoryData.medicines.filter(m => m.id !== id);
-        addActivity(`Deleted ${medicine.type.toLowerCase()}: ${medicine.name}`);
-        saveToLocalStorage();
-        renderMedicinesTable();
-        updateDashboard();
-        renderQuantityOverview();
-    };
-
-    // Adjust Quantity
+        
+        localStorage.setItem('medicines', JSON.stringify(medicines));
+        
+        // Close modal and reset form
+        bootstrap.Modal.getInstance(document.getElementById('addMedicineModal')).hide();
+        document.getElementById('addMedicineForm').reset();
+        
+        // Update UI
+        loadData();
+        autoSyncToGoogleSheet();
+    });
+    
+    // Confirm adjustment button
     document.getElementById('confirmAdjustment').addEventListener('click', function() {
-        if (!currentAdjustmentItem) return;
+        if (!currentAdjustingItem) return;
+        
         const amount = parseInt(document.getElementById('adjustmentAmount').value);
         const isAdd = document.getElementById('addStock').checked;
+        
         if (isNaN(amount) || amount <= 0) {
-            alert('Please enter a valid amount');
+            alert('Please enter a valid adjustment amount.');
             return;
         }
-        if (isAdd) {
-            currentAdjustmentItem.quantity += amount;
-            addActivity(`Added ${amount} to ${currentAdjustmentItem.name}`);
+        
+        let items;
+        if (currentAdjustingType === 'product') {
+            items = JSON.parse(localStorage.getItem('products')) || [];
         } else {
-            if (currentAdjustmentItem.quantity < amount) {
-                alert('Insufficient stock to remove this amount');
-                return;
-            }
-            currentAdjustmentItem.quantity -= amount;
-            addActivity(`Removed ${amount} from ${currentAdjustmentItem.name}`);
+            items = JSON.parse(localStorage.getItem('medicines')) || [];
         }
-        currentAdjustmentItem.lastUpdated = new Date().toLocaleString();
-        saveToLocalStorage();
-        renderProductsTable();
-        renderMedicinesTable();
-        updateDashboard();
-        renderQuantityOverview();
+        
+        if (isAdd) {
+            items[currentAdjustingItem].quantity += amount;
+        } else {
+            items[currentAdjustingItem].quantity = Math.max(0, items[currentAdjustingItem].quantity - amount);
+        }
+        
+        items[currentAdjustingItem].lastUpdated = new Date().toISOString();
+        
+        if (currentAdjustingType === 'product') {
+            localStorage.setItem('products', JSON.stringify(items));
+        } else {
+            localStorage.setItem('medicines', JSON.stringify(items));
+        }
+        
+        // Close modal
         bootstrap.Modal.getInstance(document.getElementById('adjustQuantityModal')).hide();
+        
+        // Update UI
+        loadData();
+        autoSyncToGoogleSheet();
     });
-
-    // Categories
+    
+    // Add category button
     document.getElementById('addCategoryBtn').addEventListener('click', function() {
         const newCategory = document.getElementById('newCategory').value.trim();
-        if (!newCategory) {
-            alert('Please enter a category name');
-            return;
-        }
+        if (!newCategory) return;
         
-        // Determine which category array to use
-        const targetCategories = currentCategoryType === 'product' 
-            ? inventoryData.productCategories 
-            : inventoryData.medicineCategories;
-            
-        if (targetCategories.includes(newCategory)) {
-            alert('Category already exists');
-            return;
-        }
+        const activeTab = document.querySelector('.category-tab.active');
+        const categoryType = activeTab.getAttribute('data-category-type');
         
-        targetCategories.push(newCategory);
-        addActivity(`Added ${currentCategoryType} category: ${newCategory}`);
-        saveToLocalStorage();
-        renderCategoriesList();
-        populateCategoryDropdowns();
-        document.getElementById('newCategory').value = '';
-    });
-
-    function renderCategoriesList() {
-        const categoriesList = document.getElementById('categoriesList');
-        categoriesList.innerHTML = '';
-        
-        // Get the appropriate category list based on current selection
-        const categories = currentCategoryType === 'product' 
-            ? inventoryData.productCategories 
-            : inventoryData.medicineCategories;
-            
-        if (categories.length === 0) {
-            categoriesList.innerHTML = '<li class="list-group-item">No categories yet.</li>';
-            return;
-        }
-        
-        categories.forEach(category => {
-            const li = document.createElement('li');
-            li.className = 'list-group-item d-flex justify-content-between align-items-center';
-            li.textContent = category;
-            
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'btn btn-sm btn-outline-danger';
-            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-            deleteBtn.onclick = function() {
-                deleteCategory(category, currentCategoryType);
-            };
-            
-            li.appendChild(deleteBtn);
-            categoriesList.appendChild(li);
-        });
-    }
-
-    function deleteCategory(category, type) {
-        if (!confirm(`Delete category "${category}"? This will not affect existing items with this category.`)) return;
-        
-        if (type === 'product') {
-            inventoryData.productCategories = inventoryData.productCategories.filter(c => c !== category);
+        let categories;
+        if (categoryType === 'product') {
+            categories = JSON.parse(localStorage.getItem('productCategories')) || [];
         } else {
-            inventoryData.medicineCategories = inventoryData.medicineCategories.filter(c => c !== category);
+            categories = JSON.parse(localStorage.getItem('medicineCategories')) || [];
         }
         
-        addActivity(`Deleted ${type} category: ${category}`);
-        saveToLocalStorage();
-        renderCategoriesList();
-        populateCategoryDropdowns();
-    }
-
-    function populateCategoryDropdowns() {
-        // Product category dropdowns
-        const productCategorySelect = document.getElementById('productCategory');
-        const productCategoryFilter = document.getElementById('productCategoryFilter');
-        
-        productCategorySelect.innerHTML = '<option value="">Select Category</option>';
-        productCategoryFilter.innerHTML = '<option value="">All Categories</option>';
-        
-        inventoryData.productCategories.forEach(category => {
-            const option = document.createElement('option');
-            option.value = category;
-            option.textContent = category;
-            productCategorySelect.appendChild(option.cloneNode(true));
-            productCategoryFilter.appendChild(option.cloneNode(true));
-        });
-        
-        // Medicine category dropdowns
-        const medicineCategorySelect = document.getElementById('medicineCategory');
-        const medicineCategoryFilter = document.getElementById('medicineCategoryFilter');
-        
-        medicineCategorySelect.innerHTML = '<option value="">Select Category</option>';
-        medicineCategoryFilter.innerHTML = '<option value="">All Categories</option>';
-        
-        inventoryData.medicineCategories.forEach(category => {
-            const option = document.createElement('option');
-            option.value = category;
-            option.textContent = category;
-            medicineCategorySelect.appendChild(option.cloneNode(true));
-            medicineCategoryFilter.appendChild(option.cloneNode(true));
-        });
-    }
-
-    // Filtering and Sorting
-    document.getElementById('productSearch').addEventListener('input', filterProducts);
-    document.getElementById('productCategoryFilter').addEventListener('change', filterProducts);
-    document.getElementById('productSort').addEventListener('change', filterProducts);
-
-    function filterProducts() {
-        const searchTerm = document.getElementById('productSearch').value.toLowerCase();
-        const categoryFilter = document.getElementById('productCategoryFilter').value;
-        const sortOption = document.getElementById('productSort').value;
-        let filteredProducts = inventoryData.products.filter(p =>
-            p.name.toLowerCase().includes(searchTerm) &&
-            (categoryFilter === '' || p.category === categoryFilter)
-        );
-        if (sortOption === 'name') {
-            filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
-        } else if (sortOption === 'quantity') {
-            filteredProducts.sort((a, b) => a.quantity - b.quantity);
-        } else if (sortOption === 'category') {
-            filteredProducts.sort((a, b) => a.category.localeCompare(b.category));
-        } else if (sortOption === 'weight') {
-            filteredProducts.sort((a, b) => convertToKg(a.weight, a.weightUnit) - convertToKg(b.weight, b.weightUnit));
-        }
-        renderProductsTable(filteredProducts);
-    }
-
-    document.getElementById('medicineSearch').addEventListener('input', filterMedicines);
-    document.getElementById('medicineCategoryFilter').addEventListener('change', filterMedicines);
-    document.getElementById('medicineSort').addEventListener('change', filterMedicines);
-
-    function filterMedicines() {
-        const searchTerm = document.getElementById('medicineSearch').value.toLowerCase();
-        const categoryFilter = document.getElementById('medicineCategoryFilter').value;
-        const sortOption = document.getElementById('medicineSort').value;
-        let filteredMedicines = inventoryData.medicines.filter(m =>
-            m.name.toLowerCase().includes(searchTerm) &&
-            (categoryFilter === '' || m.category === categoryFilter)
-        );
-        if (sortOption === 'name') {
-            filteredMedicines.sort((a, b) => a.name.localeCompare(b.name));
-        } else if (sortOption === 'quantity') {
-            filteredMedicines.sort((a, b) => a.quantity - b.quantity);
-        } else if (sortOption === 'category') {
-            filteredMedicines.sort((a, b) => a.category.localeCompare(b.category));
-        } else if (sortOption === 'weight') {
-            filteredMedicines.sort((a, b) => convertToKg(a.weight, a.weightUnit) - convertToKg(b.weight, b.weightUnit));
-        }
-        renderMedicinesTable(filteredMedicines);
-    }
-
-    // Excel Export/Import
-    document.getElementById('exportProducts').addEventListener('click', function() {
-        exportToExcel('products');
-    });
-    document.getElementById('exportMedicines').addEventListener('click', function() {
-        exportToExcel('medicines');
-    });
-
-    function exportToExcel(type) {
-        const data = type === 'products' ? inventoryData.products : inventoryData.medicines;
-        if (data.length === 0) {
-            alert('No data to export');
-            return;
-        }
-        const worksheet = XLSX.utils.json_to_sheet(data);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, type.charAt(0).toUpperCase() + type.slice(1));
-        XLSX.writeFile(workbook, `${type}.xlsx`);
-    }
-
-    document.getElementById('excelFile').addEventListener('change', function(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet);
-            if (jsonData.length === 0) {
-                alert('No data found in the file');
-                return;
-            }
-            if (firstSheetName.toLowerCase().includes('product')) {
-                // Add default weightUnit and expiryDate if not present
-                const productsWithUnits = jsonData.map(p => ({
-                    ...p,
-                    weightUnit: p.weightUnit || 'kg',
-                    expiryDate: p.expiryDate || 'N/A'
-                }));
-                inventoryData.products.push(...productsWithUnits);
-                addActivity(`Imported ${jsonData.length} products from Excel`);
-                renderProductsTable();
-                renderQuantityOverview();
-            } else if (firstSheetName.toLowerCase().includes('medicine')) {
-                // Add default weightUnit if not present
-                const medicinesWithUnits = jsonData.map(m => ({
-                    ...m,
-                    weightUnit: m.weightUnit || 'kg'
-                }));
-                inventoryData.medicines.push(...medicinesWithUnits);
-                addActivity(`Imported ${jsonData.length} medicines from Excel`);
-                renderMedicinesTable();
-                renderQuantityOverview();
+        if (!categories.includes(newCategory)) {
+            categories.push(newCategory);
+            
+            if (categoryType === 'product') {
+                localStorage.setItem('productCategories', JSON.stringify(categories));
             } else {
-                alert('Unsupported file format');
-                return;
-            }
-            saveToLocalStorage();
-            updateDashboard();
-        };
-        reader.readAsArrayBuffer(file);
-    });
-
-    // Local Storage
-    function loadFromLocalStorage() {
-        const data = localStorage.getItem('inventoryData');
-        if (data) {
-            inventoryData = JSON.parse(data);
-            
-            // Handle migration from old data structure
-            if (inventoryData.categories && !inventoryData.productCategories) {
-                inventoryData.productCategories = inventoryData.categories;
-                delete inventoryData.categories;
-            }
-            if (!inventoryData.medicineCategories) {
-                inventoryData.medicineCategories = [];
+                localStorage.setItem('medicineCategories', JSON.stringify(categories));
             }
             
-            // Add default weightUnit and expiryDate for existing items
-            inventoryData.products.forEach(p => {
-                if (!p.weightUnit) p.weightUnit = 'kg';
-                if (!p.expiryDate) p.expiryDate = 'N/A';
-            });
-            inventoryData.medicines.forEach(m => {
-                if (!m.weightUnit) m.weightUnit = 'kg';
-            });
+            document.getElementById('newCategory').value = '';
+            updateCategoryFilters();
+            updateCategoriesList();
         }
-    }
+    });
+    
+    // Sort buttons for quantity overview
+    document.getElementById('sortByCategory').addEventListener('click', function() {
+        sortQuantityOverview('category');
+    });
+    
+    document.getElementById('sortByQuantity').addEventListener('click', function() {
+        sortQuantityOverview('quantity');
+    });
+}
 
-    function saveToLocalStorage() {
-        localStorage.setItem('inventoryData', JSON.stringify(inventoryData));
-    }
+function setupNavigation() {
+    // Navigation links
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', function() {
+            const page = this.getAttribute('data-page');
+            
+            // Hide all pages
+            document.querySelectorAll('.page-content').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Show selected page
+            document.getElementById(page).classList.add('active');
+            
+            // Update active nav link
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            this.classList.add('active');
+        });
+    });
+}
 
-    // Initial page load
-    showPage('dashboard');
-    </script>
+function setupCategoryTabs() {
+    document.querySelectorAll('.category-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.category-tab').forEach(t => {
+                t.classList.remove('active');
+            });
+            this.classList.add('active');
+            updateCategoriesList();
+        });
+    });
+    
+    // Initial update
+    updateCategoriesList();
+}
+
+function updateCategoriesList() {
+    const activeTab = document.querySelector('.category-tab.active');
+    const categoryType = activeTab.getAttribute('data-category-type');
+    
+    let categories;
+    if (categoryType === 'product') {
+        categories = JSON.parse(localStorage.getItem('productCategories')) || [];
+    } else {
+        categories = JSON.parse(localStorage.getItem('medicineCategories')) || [];
+    }
+    
+    const categoriesList = document.getElementById('categoriesList');
+    categoriesList.innerHTML = '';
+    
+    categories.forEach(category => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.innerHTML = `
+            ${category}
+            <button class="btn btn-sm btn-outline-danger delete-category-btn" data-category="${category}" data-type="${categoryType}">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        categoriesList.appendChild(li);
+    });
+    
+    // Add event listeners to delete buttons
+    document.querySelectorAll('.delete-category-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const category = this.getAttribute('data-category');
+            const type = this.getAttribute('data-type');
+            
+            let categories;
+            if (type === 'product') {
+                categories = JSON.parse(localStorage.getItem('productCategories')) || [];
+            } else {
+                categories = JSON.parse(localStorage.getItem('medicineCategories')) || [];
+            }
+            
+            const index = categories.indexOf(category);
+            if (index !== -1) {
+                categories.splice(index, 1);
+                
+                if (type === 'product') {
+                    localStorage.setItem('productCategories', JSON.stringify(categories));
+                } else {
+                    localStorage.setItem('medicineCategories', JSON.stringify(categories));
+                }
+                
+                updateCategoryFilters();
+                updateCategoriesList();
+            }
+        });
+    });
+}
+
+function openAdjustQuantityModal(index, type) {
+    currentAdjustingItem = parseInt(index);
+    currentAdjustingType = type;
+    
+    let items;
+    if (type === 'product') {
+        items = JSON.parse(localStorage.getItem('products')) || [];
+    } else {
+        items = JSON.parse(localStorage.getItem('medicines')) || [];
+    }
+    
+    if (items.length <= currentAdjustingItem) return;
+    
+    const item = items[currentAdjustingItem];
+    document.getElementById('currentQuantityDisplay').textContent = item.quantity;
+    document.getElementById('adjustModalTitle').textContent = `Adjust Quantity - ${item.name}`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('adjustQuantityModal'));
+    modal.show();
+}
+
+function sortQuantityOverview(sortBy) {
+    const productsList = document.getElementById('productsQuantityList');
+    const medicinesList = document.getElementById('medicinesQuantityList');
+    
+    // Sort products
+    const productsRows = Array.from(productsList.querySelectorAll('tr'));
+    productsRows.sort((a, b) => {
+        let aValue, bValue;
+        
+        if (sortBy === 'category') {
+            aValue = a.cells[1].textContent;
+            bValue = b.cells[1].textContent;
+        } else if (sortBy === 'quantity') {
+            aValue = parseInt(a.cells[2].textContent);
+            bValue = parseInt(b.cells[2].textContent);
+        } else {
+            aValue = a.cells[0].textContent;
+            bValue = b.cells[0].textContent;
+        }
+        
+        if (aValue < bValue) return -1;
+        if (aValue > bValue) return 1;
+        return 0;
+    });
+    
+    productsRows.forEach(row => productsList.appendChild(row));
+    
+    // Sort medicines
+    const medicinesRows = Array.from(medicinesList.querySelectorAll('tr'));
+    medicinesRows.sort((a, b) => {
+        let aValue, bValue;
+        
+        if (sortBy === 'category') {
+            aValue = a.cells[1].textContent;
+            bValue = b.cells[1].textContent;
+        } else if (sortBy === 'quantity') {
+            aValue = parseInt(a.cells[2].textContent);
+            bValue = parseInt(b.cells[2].textContent);
+        } else {
+            aValue = a.cells[0].textContent;
+            bValue = b.cells[0].textContent;
+        }
+        
+        if (aValue < bValue) return -1;
+        if (aValue > bValue) return 1;
+        return 0;
+    });
+    
+    medicinesRows.forEach(row => medicinesList.appendChild(row));
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+}
+</script>
 </body>
 </html>
